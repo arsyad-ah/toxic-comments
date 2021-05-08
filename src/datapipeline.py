@@ -1,15 +1,24 @@
+import os
 import pandas as pd
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.model_selection import train_test_split
-
-
-class DataIngest:
-    def __init__(self):
-        self._data = ''
     
-    def read_data(self, file_path, source_type):
+
+class DataPipeline:
+    def __init__(self, config, run_time):
+        self._data = ''
+        self._config = config
+        self._run_time = run_time
+
+    def read_data(self):
+        self._data =  self._read_data(
+            file_path=self._config.get('PATHS', 'raw_data'), 
+            source_type=os.path.splitext(self._config.get('PATHS', 'raw_data'))[1]
+        )
+
+    def _read_data(self, file_path, source_type):
         source_type = source_type.lower()
         if source_type == 'db':
             # TODO implement DB
@@ -19,13 +28,7 @@ class DataIngest:
         else:
             raise Exception('Unknown file format. Please check')
 
-
-class DataPipeline:
-    def __init__(self):
-        self._data = ''
-
-    def clean_data(self, data):
-        self._data = data
+    def clean_data(self):
         self._data.drop('id', axis=1, inplace=True)
         self._data['toxic_cum_sum'] = self._data.iloc[:, 1:].sum(axis=1)
         self._data['is_negative'] = self._data['toxic_cum_sum']\
@@ -35,11 +38,9 @@ class DataPipeline:
         self._data['sentence_count'] = self._data["comment_text"]\
             .apply(self._get_sentence_count)
 
-        # does toxic comments have longer word count?
         self._data['count_word'] = self._data["comment_text"]\
             .apply(lambda x: len(str(x).split()))
 
-        # does toxic comments have more unique words?
         self._data['count_unique_word'] = self._data["comment_text"]\
             .apply(lambda x: len(set(str(x).split())))
 
@@ -88,19 +89,46 @@ class DataPipeline:
     def _get_unq_char_count(self, x):
         return len(set(x.replace(' ', '')))
 
+    def prepare(self):
+        X_col = 'comment_text'
+        y_col = self._data.drop(X_col, axis=1).columns
 
-    def split_data(self, X_col, y_col, test_size=0.2, random_seed=42):
+        train, test = self._split_data(
+            X_col, 
+            y_col, 
+            self._config.get('DEFAULT', 'train_size'), 
+            self._config('DEFAULT', 'random_seed'))
+        
+        meta_data = {
+            f'train_{self._run_time}.csv': train, 
+            f'test_{self._run_time}.csv': test
+        }
+
+        for k,v in meta_data.items():
+            self._save(v, self._config.get('PATHS', 'interim_data'), k)
+
+    def _save(self, data, path, file_name):
+        data.to_csv(os.path.join(path, file_name), index=False)
+
+    def _split_data(self, X_col, y_col, train_size, random_seed):
         if type(X_col) != list and type(y_col) != list:
             raise Exception(f'Expecting a list of column names, \
                 received X_col: {type(X_col)} and y_col: {type(y_col)}. Please check')
         
-        X_train, X_test, y_train, y_test = train_test_split(
-            X=self._data[X_col],
-            y=self._data[y_col],
-            test_size=test_size,
+        # X_train, X_test, y_train, y_test = train_test_split(
+        #     self._data[X_col],
+        #     self._data[y_col],
+        #     train_size=train_size,
+        #     random_state=random_seed,
+        #     stratify=self._data[y_col])
+
+        # return X_train, X_test, y_train, y_test
+
+        train, test = train_test_split(
+            self._data,
+            train_size=train_size,
             random_state=random_seed,
             stratify=self._data[y_col])
 
-        return X_train, X_test, y_train, y_test
-
+        return train, test
     
