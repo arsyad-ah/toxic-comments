@@ -4,26 +4,28 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.model_selection import train_test_split
-    
+from src.utils import create_folder
 
 class DataPipeline:
     def __init__(self, config, run_time):
         self._data = ''
         self._config = config
         self._run_time = run_time
-
-    def read_data(self):
-        self._data =  self._read_data(
-            file_path=self._config.get('PATHS', 'raw_data'), 
-            source_type=os.path.splitext(self._config.get('PATHS', 'raw_data'))[1]
+        
+    def read_data(self, file_path):
+        self._data = self._read_data(
+            file_path=self._config.get('PATHS', file_path), 
+            source_type=os.path.splitext(self._config.get('PATHS', file_path))[1].strip('.')
         )
 
     def _read_data(self, file_path, source_type):
         source_type = source_type.lower()
         if source_type == 'db':
-            # TODO implement DB
+            # TODO implement DB. use docker postgres
             pass
         elif source_type == 'csv':
+            if self._config.get('DEFAULT', 'is_sample') is True or self._config.get('DEFAULT', 'is_sample') == 'True':
+                return pd.read_csv(file_path).head(50) # TODO remove once ok
             return pd.read_csv(file_path)
         else:
             raise Exception('Unknown file format. Please check')
@@ -96,8 +98,8 @@ class DataPipeline:
         train, test = self._split_data(
             X_col, 
             y_col, 
-            self._config.get('DEFAULT', 'train_size'), 
-            self._config('DEFAULT', 'random_seed'))
+            float(self._config.get('DEFAULT', 'train_size')), 
+            int(self._config.get('DEFAULT', 'random_seed')))
         
         meta_data = {
             f'train_{self._run_time}.csv': train, 
@@ -108,12 +110,14 @@ class DataPipeline:
             self._save(v, self._config.get('PATHS', 'interim_data'), k)
 
     def _save(self, data, path, file_name):
+        create_folder(path)
         data.to_csv(os.path.join(path, file_name), index=False)
 
-    def _split_data(self, X_col, y_col, train_size, random_seed):
-        if type(X_col) != list and type(y_col) != list:
-            raise Exception(f'Expecting a list of column names, \
-                received X_col: {type(X_col)} and y_col: {type(y_col)}. Please check')
+    def _split_data(self, X_col, y_col, train_size, random_seed, stratify=False):
+        # TODO: chec logic for below and reason for code
+        # if type(X_col) != list and type(y_col) != list:
+        #     raise Exception(f'Expecting a list of column names, \
+        #         received X_col: {type(X_col)} and y_col: {type(y_col)}. Please check')
         
         # X_train, X_test, y_train, y_test = train_test_split(
         #     self._data[X_col],
@@ -123,12 +127,13 @@ class DataPipeline:
         #     stratify=self._data[y_col])
 
         # return X_train, X_test, y_train, y_test
-
+        stratify_by = self._data[y_col] if stratify else None
+        
         train, test = train_test_split(
             self._data,
             train_size=train_size,
             random_state=random_seed,
-            stratify=self._data[y_col])
+            stratify=stratify_by)
 
         return train, test
     
