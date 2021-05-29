@@ -23,3 +23,4 @@ dependencies:
     - jupyter_contrib_nbextensions==0.5.1
     - transformers==3.0.2
     - vaderSentiment==3.3.2
+    - mlflow==1.17.0
