@@ -13,10 +13,10 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def save(self):
+    def save_model(self):
         pass
 
     @abstractmethod
-    def load(self):
+    def load_model(self):
         pass
     
