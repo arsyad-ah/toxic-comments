@@ -20,7 +20,6 @@ def train(config, run_time):
     # mlflow.set_tracking_uri(uri)
 
     with mlflow.start_run():
-        print ('test')
         dpl = DataPipeline(config, run_time)
         # TODO: convert to DB
         dpl.read_data('interim_train_data')
