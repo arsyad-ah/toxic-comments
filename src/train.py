@@ -1,10 +1,6 @@
 import os
 import pandas as pd
 import numpy as np
-from nltk.tokenize import sent_tokenize, word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-from sklearn.model_selection import train_test_split
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tqdm import tqdm
