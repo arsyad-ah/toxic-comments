@@ -5,6 +5,11 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.model_selection import train_test_split
 from src.utils import create_folder
+import nltk
+# nltk.download('punkt')
+# nltk.download('stopwords')
+# nltk.download('wordnet')
+
 
 class DataPipeline:
     def __init__(self, config, run_time):
@@ -17,6 +22,7 @@ class DataPipeline:
             file_path=self._config.get('PATHS', file_path), 
             source_type=os.path.splitext(self._config.get('PATHS', file_path))[1].strip('.')
         )
+        print('Raw data shape:', self._data.shape)
 
     def _read_data(self, file_path, source_type):
         source_type = source_type.lower()
@@ -24,7 +30,8 @@ class DataPipeline:
             # TODO implement DB. use docker postgres
             pass
         elif source_type == 'csv':
-            if self._config.get('DEFAULT', 'is_sample') is True or self._config.get('DEFAULT', 'is_sample') == 'True':
+            # if self._config.get('DEFAULT', 'is_sample') is True or self._config.get('DEFAULT', 'is_sample') == 'True':
+            if self._config.get('DEFAULT', 'is_sample') == 'True':
                 return pd.read_csv(file_path).head(50) # TODO remove once ok
             return pd.read_csv(file_path)
         else:
@@ -60,16 +67,18 @@ class DataPipeline:
         return len(sent_tokenize(x))
 
     def _get_tok_clean_comments(self, add_stopwords=None):
-        print ('add_stopwords:', add_stopwords, type(add_stopwords))
+        print ('add_stopwords:', add_stopwords)
         tok_clean_comments = []
+        stop_words = set(stopwords.words('english'))
         if add_stopwords is None:
-            stop_words = set(stopwords.words('english'))
+            pass
         elif type(add_stopwords) == list:
             for i in add_stopwords:
                 stop_words.add(i)
         else:
             raise Exception('Unknown input. Please check.')
         lemmatizer = WordNetLemmatizer()
+        print('lemmatizing tokens')
         for i in range(self._data.shape[0]):
             comments = word_tokenize(self._data.loc[i, 'comment_text_clean'])
             tok_clean_comments.append([lemmatizer.lemmatize(w.lower()) for w in comments \
@@ -107,10 +116,11 @@ class DataPipeline:
         }
 
         for k,v in meta_data.items():
-            self._save(v, self._config.get('PATHS', 'interim_data'), k)
+            self._save(v, self._config.get('PATHS', 'interim_data_path'), k)
 
     def _save(self, data, path, file_name):
         create_folder(path)
+        print('saving interim dataset')
         data.to_csv(os.path.join(path, file_name), index=False)
 
     def _split_data(self, X_col, y_col, train_size, random_seed, stratify=False):
