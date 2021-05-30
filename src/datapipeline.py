@@ -30,7 +30,6 @@ class DataPipeline:
             # TODO implement DB. use docker postgres
             pass
         elif source_type == 'csv':
-            # if self._config.get('DEFAULT', 'is_sample') is True or self._config.get('DEFAULT', 'is_sample') == 'True':
             if self._config.get('DEFAULT', 'is_sample') == 'True':
                 return pd.read_csv(file_path).head(50) # TODO remove once ok
             return pd.read_csv(file_path)
