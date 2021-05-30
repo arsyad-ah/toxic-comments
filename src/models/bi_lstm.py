@@ -37,20 +37,20 @@ class BiLSTM(BaseModel):
                 name='embeddings')]) # max_len
 
         self._model.add(
-            Bidirectional(LSTM(4, return_sequences=True)))
+            Bidirectional(LSTM(64, return_sequences=True)))
         self._model.add(
             GlobalMaxPooling1D())
         self._model.add(
             Dense(16, activation='relu'))
         self._model.add(
-            Dropout(0.25))
+            Dropout(0.30))
         self._model.add(
             Dense(6, activation='sigmoid'))
 
         self._model.compile(
             loss='binary_crossentropy',
             optimizer='adam', 
-            metrics=['accuracy']) # TODO: change to correct metrics once all ok
+            metrics=['accuracy', 'crossentropy']) # TODO: change to correct metrics once all ok
 
     def get_summary(self):
         return self._model.summary()
@@ -60,7 +60,7 @@ class BiLSTM(BaseModel):
               y_train,
               save_path,
               epochs=1,
-              batch_size=32,
+              batch_size=16,
               validation_data=None,
               validation_split=None,
               verbose=1):
