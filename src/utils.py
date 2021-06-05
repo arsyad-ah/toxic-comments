@@ -8,7 +8,7 @@ def create_folder(path):
     return True
 
 
-def _cfg_to_dict(cfg, section_name, no_defaults=False, **kwargs):
+def cfg_to_dict(cfg, section_name, no_defaults=False, **kwargs):
     results = {}
     for opt in cfg.options(section_name, no_defaults=no_defaults, **kwargs):
         print(opt, section_name)
