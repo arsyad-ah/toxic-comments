@@ -4,9 +4,12 @@ import io
 import json 
 import numpy as np
 import tensorflow as tf
+from tqdm import tqdm
 from tensorflow.keras import Sequential
+from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.models import load_model, save_model
 from tensorflow.keras.layers import Bidirectional, LSTM, Dense, Dropout, Embedding, GlobalMaxPooling1D
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.callbacks import ModelCheckpoint
 from src.utils import create_folder
 from src.models.base import BaseModel
@@ -15,19 +18,32 @@ from src.models.base import BaseModel
 class BiLSTM(BaseModel):
     _model_name = 'BiLSTMClf'
 
-    def __init__(self, input_dim=None, output_dim=None, weights=None, input_length=None, run_time=None, tokenizer=None):
+    def __init__(self, output_dim=None, input_length=None, run_time=None, 
+                       X_train=None, y_train=None, save_path=None, 
+                       epochs=None, batch_size=None, validation_data=None, 
+                       validation_split=None, verbose=1, embedding_path=None, 
+                       n_words=10000):
         super().__init__()
-        self._input_dim = input_dim
         self._output_dim = output_dim
-        self._weights = weights
         self._input_length = input_length
         self._run_time = run_time
-        self._tokenizer = tokenizer
+        self._X_train = X_train
+        self._y_train = y_train
+        self._save_path = save_path
+        self._epochs = epochs
+        self._batch_size = batch_size
+        self._validation_data = validation_data
+        self._validation_split = validation_split
+        self._verbose = verbose
+        self._embedding_path = embedding_path
+        self._n_words = n_words
+        self._input_dim = ''
+        self._weights = ''
+        self._tokenizer = ''
         self._model = None
         self._history = None
 
     def _create_model(self):
-
         self._model = Sequential([
             Embedding(
                 input_dim=self._input_dim, # vocab_size
@@ -50,30 +66,65 @@ class BiLSTM(BaseModel):
         self._model.compile(
             loss='binary_crossentropy',
             optimizer='adam', 
-            metrics=['accuracy', 'crossentropy']) # TODO: change to correct metrics once all ok
+            metrics=['accuracy']) # TODO: change to correct metrics once all ok
+
+    def _preprocess_data(self):
+        self._tokenizer = Tokenizer(num_words=self._n_words, oov_token='<oov>')
+        self._tokenizer.fit_on_texts(self._X_train)
+        
+        self._input_length = max([len(row) for row in self._X_train]) if self._input_length is None or self._input_length == 'None' else int(self._input_length)
+        self._X_train = self._tokenize_and_pad(self._X_train, self._tokenizer, self._input_length)
+        self._input_dim = len(self._tokenizer.word_index) + 1
+
+    def _tokenize_and_pad(self, data, tokenizer, maxlen, padding='post', truncating='post'):
+        print('tokenizing data')
+        data = tokenizer.texts_to_sequences(data)
+        print('padding tokens')
+        return pad_sequences(data, maxlen=maxlen, padding=padding, truncating=truncating)
+
+    def _get_embeddings(self):
+        embeddings_index = {}
+        print('reading pre-trained embeddings')
+        glove = open(self._embedding_path, 'r', encoding='utf-8')
+        for line in tqdm(glove):
+            values = line.split(" ")
+            word = values[0]
+            coefs = np.asarray(values[1:], dtype='float32')
+            embeddings_index[word] = coefs
+        glove.close()
+        print('Found %s word vectors.' % len(embeddings_index))
+        
+        # creating embedding matrix for words dataset
+        print('creating embedding matrix')
+        self._weights= np.zeros((len(self._tokenizer.word_index)+1, self._output_dim))
+        for word, index in tqdm(self._tokenizer.word_index.items()):
+            embedding_vector = embeddings_index.get(word)
+            if embedding_vector is not None:
+                self._weights[index] = embedding_vector
 
     def get_summary(self):
         return self._model.summary()
 
-    def train(self,
-              X_train,
-              y_train,
-              save_path,
-              epochs=1,
-              batch_size=16,
-              validation_data=None,
-              validation_split=None,
-              verbose=1):
+    def train(self):
 
+        # preprocess data
+        print ('preprocessing data')
+        self._preprocess_data()
+
+        # get embeddings
+        print('getting embeddings weights')
+        self._get_embeddings()
+
+        # create model architecture
         self._create_model()
         summary = self.get_summary()
         print('mode summary:', summary)
 
-        save_path = os.path.join(save_path, 'checkpoints', f'{self._model_name}_{self._run_time}')
-        create_folder(save_path)
+        self._save_path = os.path.join(self._save_path, 'checkpoints', f'{self._model_name}_{self._run_time}')
+        create_folder(self._save_path)
 
         cp_callback = ModelCheckpoint(
-            filepath=save_path,
+            filepath=self._save_path,
             save_weights_only=False,
             # verbose=verbose,
             save_best_only=True,
@@ -81,12 +132,12 @@ class BiLSTM(BaseModel):
             mode='min')
 
         self._history = self._model.fit(
-                                    X_train,
-                                    y_train,
-                                    epochs=epochs,
-                                    validation_data=validation_data,
-                                    validation_split=validation_split,
-                                    batch_size=batch_size,
+                                    self._X_train,
+                                    self._y_train,
+                                    epochs=self._epochs,
+                                    validation_data=self._validation_data,
+                                    validation_split=self._validation_split,
+                                    batch_size=self._batch_size,
                                     callbacks=[cp_callback])
 
     def predict(self, X, threshhold=0.5):
@@ -94,6 +145,7 @@ class BiLSTM(BaseModel):
         return (pred > threshhold).astype(np.int)
 
     def evaluate(self, X, y):
+        X = self._tokenize_and_pad(X, self._tokenizer, self._input_length)
         return self._model.evaluate(X, y)
 
     def load_model(self, path):
