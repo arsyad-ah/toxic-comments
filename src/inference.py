@@ -3,7 +3,6 @@ import pickle
 import json
 from src.datapipeline import DataPipeline
 from src.models.bi_lstm import BiLSTM
-from src.train import _tokenize_and_pad
 from keras_preprocessing.text import tokenizer_from_json
 
 MAXLEN=100
@@ -19,11 +18,13 @@ def make_inference(config, run_time):
     tokenizer = _load_tokenizer(config)
     print('tokenizer loaded')
 
-    encoded_inference_data = _tokenize_and_pad(inference_data.comment_text, tokenizer, maxlen=MAXLEN)
-    print('data preprocessed for inference')
 
     # load model
     model = BiLSTM()
+
+    encoded_inference_data = model._tokenize_and_pad(inference_data.comment_text, tokenizer, maxlen=MAXLEN)
+    print('data preprocessed for inference')
+
     model.load_model(
         os.path.join(
             config.get('PATHS', 'model_path'),
