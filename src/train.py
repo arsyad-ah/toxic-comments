@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import numpy as np
-from src.utils import _cfg_to_dict
+from src.utils import cfg_to_dict
 from src.models.bi_lstm import BiLSTM
 from src.datapipeline import DataPipeline
 import mlflow
@@ -77,4 +77,4 @@ def train(config, run_time):
 def _get_model_params(config, model_selection, no_defaults=False):
     if model_selection == 1:
         section = 'LSTM_MODEL'
-    return _cfg_to_dict(config, section, no_defaults=no_defaults)
+    return cfg_to_dict(config, section, no_defaults=no_defaults)
