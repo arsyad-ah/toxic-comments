@@ -1,9 +1,9 @@
 import logging
 from src.datapipeline import DataPipeline
 from src.train import train
-from src.inference import make_inference
-from configparser import ConfigParser
+# from src.inference import make_inference
 from datetime import datetime
+from src.utils import _cfg_to_dict, ConfigParser
 
 
 NOW = datetime.now()
@@ -36,7 +36,7 @@ def main(config):
 
 if __name__ == '__main__':
     import argparse
-    from configparser import ConfigParser, ExtendedInterpolation
+    from configparser import ExtendedInterpolation
 
     parser = argparse.ArgumentParser(
         prog='toxic',
