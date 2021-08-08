@@ -34,24 +34,24 @@ def main(config):
 
 
 
-if __name__ == '__main__':
-    import argparse
-    from configparser import ExtendedInterpolation
+# if __name__ == '__main__':
+#     import argparse
+#     from configparser import ExtendedInterpolation
 
-    parser = argparse.ArgumentParser(
-        prog='toxic',
-        description='Params to run main function')
+#     parser = argparse.ArgumentParser(
+#         prog='toxic',
+#         description='Params to run main function')
 
-    parser.add_argument(
-        "--config_path",
-        help="Full path to config file",
-        default='./config/config.ini',
-    )
+#     parser.add_argument(
+#         "--config_path",
+#         help="Full path to config file",
+#         default='./config/config.ini',
+#     )
 
-    args = parser.parse_args()
-    config = ConfigParser(interpolation=ExtendedInterpolation())
-    print('config load ok')
-    config.read(args.config_path)
+#     args = parser.parse_args()
+#     config = ConfigParser(interpolation=ExtendedInterpolation())
+#     print('config load ok')
+#     config.read(args.config_path)
 
-    print('executing run')
-    main(config)
+#     print('executing run')
+#     main(config)
