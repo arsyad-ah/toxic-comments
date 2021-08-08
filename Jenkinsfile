@@ -14,6 +14,9 @@ pipeline { //must be top-level
           '''
 //         sh 'pylint -E src'
         echo 'conda install completed!'
+        sh 'conda list'
+        sh 'conda init bash'
+        sh 'conda list'
       }    
     }
     
@@ -21,7 +24,6 @@ pipeline { //must be top-level
     
       steps { // script that executes command on jenkins server/agent. e.g. npm install, npm build
         echo 'Testing the application'
-        sh 'conda list'
       }
     }
     
