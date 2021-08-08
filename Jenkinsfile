@@ -13,10 +13,11 @@ pipeline { //must be top-level
           apt-get update && apt-get install build-essential -y
           conda env update --file conda.yml --name base
           echo "conda install completed!"
-          echo pwd
-          echo ls
-          conda list
+          pwd
+          ls
           '''
+//           conda list
+
       }    
     }
     
