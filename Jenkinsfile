@@ -19,7 +19,9 @@ pipeline { //must be top-level
     }
     
     stage('code-check') {
-      sh 'pylint -E src'
+      steps {
+        sh 'pylint -E src'
+      }
     }
     
     stage("test") { // usually build, test, deploy stage
