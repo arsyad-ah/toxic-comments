@@ -8,6 +8,7 @@ pipeline { //must be top-level
     
       steps { // script that executes command on jenkins server/agent. e.g. npm install, npm build
         echo 'Building the application'
+        echo 'add some change'
       }  
     }
     
