@@ -4,20 +4,22 @@ pipeline { //must be top-level
   agent { docker { image 'continuumio/miniconda3:latest' }
         }
   stages { // where different stages happen. user to decide how many stages
-  
+    
     stage("build") { // usually build, test, deploy stage
       steps { // script that executes command on jenkins server/agent. e.g. npm install, npm build
         echo 'Building the application'
+        sh 'conda init bash'
         sh '''
           apt-get update && apt-get install build-essential -y
-          conda env update --file conda.yml
+          conda env update --file conda.yml --name base
+          conda install completed!
+          conda list
           '''
-//         sh 'pylint -E src'
-        echo 'conda install completed!'
-        sh 'conda list'
-        sh 'conda init bash'
-        sh 'conda list'
       }    
+    }
+    
+    stage('code-check') {
+      sh 'pylint -E src'
     }
     
     stage("test") { // usually build, test, deploy stage
