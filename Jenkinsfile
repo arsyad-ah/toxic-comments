@@ -10,7 +10,7 @@ pipeline { //must be top-level
         echo 'Building the application'
         sh '''
           apt-get update && apt-get install build-essential -y
-          conda env update --file conda.yml'
+          conda env update --file conda.yml
           conda activate toxic-clf
           '''
 //         sh 'pylint -E src'
