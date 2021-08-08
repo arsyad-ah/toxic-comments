@@ -12,7 +12,7 @@ pipeline { //must be top-level
         sh '''
           apt-get update && apt-get install build-essential -y
           conda env update --file conda.yml --name base
-          conda install completed!
+          echo "conda install completed!"
           conda list
           '''
       }    
