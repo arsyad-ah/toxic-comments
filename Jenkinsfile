@@ -11,10 +11,9 @@ pipeline { //must be top-level
         sh '''
           apt-get update && apt-get install build-essential -y
           conda env update --file conda.yml
-          conda activate toxic-clf
           '''
 //         sh 'pylint -E src'
-        echo 'pylint completed!'
+        echo 'conda install completed!'
       }    
     }
     
@@ -22,6 +21,7 @@ pipeline { //must be top-level
     
       steps { // script that executes command on jenkins server/agent. e.g. npm install, npm build
         echo 'Testing the application'
+        sh 'conda list'
       }
     }
     
