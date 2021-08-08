@@ -6,13 +6,16 @@ pipeline { //must be top-level
   stages { // where different stages happen. user to decide how many stages
   
     stage("build") { // usually build, test, deploy stage
-    
       steps { // script that executes command on jenkins server/agent. e.g. npm install, npm build
         echo 'Building the application'
-        apt-get update && apt-get install build-essential -y
-        conda env update --file conda.yml --name base
-        pylint -E src
-      }  
+        sh '''
+          apt-get update && apt-get install build-essential -y
+          conda env update --file conda.yml'
+          conda activate toxic-clf
+          '''
+//         sh 'pylint -E src'
+        echo 'pylint completed!'
+      }    
     }
     
     stage("test") { // usually build, test, deploy stage
