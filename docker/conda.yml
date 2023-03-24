@@ -1,0 +1,31 @@
+name: toxic-clf
+
+channels:
+  - defaults
+  
+dependencies:
+  - python=3.9
+  - pip=22.2.2
+
+  - pip:
+    - torch==1.13.1
+    - nltk==3.8.1
+    - seaborn==0.9.0
+    - matplotlib==3.7.1
+    - pandas==1.5.3
+    - pytest==4.6.3
+    - pylint==2.3.1
+    - gunicorn==20.0.4
+    - SQLAlchemy==2.0.6
+    - jupyter==1.0.0
+    - notebook==6.5.3
+    - jupyter_contrib_nbextensions==0.5.1
+    - vaderSentiment==3.3.2
+    - mlflow==2.2.2
+    - scikit-learn==1.2.2
+    - transformers==4.27.1
+    - tensorflow==2.7
+    - torch==1.13.1
+    - numpy==1.23.4
+    - protobuf==3.19.6
+

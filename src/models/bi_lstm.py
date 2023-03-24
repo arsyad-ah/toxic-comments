@@ -1,7 +1,7 @@
-import pickle
 import os
 import io
 import json 
+import pickle
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
@@ -15,33 +15,38 @@ from src.utils import create_folder
 from src.models.base import BaseModel
 
 
-class BiLSTM(BaseModel):
+class BiLSTMClf(BaseModel):
     _model_name = 'BiLSTMClf'
+    # TODO: refactor
 
-    def __init__(self, output_dim=None, input_length=None, run_time=None, 
-                       X_train=None, y_train=None, save_path=None, 
-                       epochs=None, batch_size=None, validation_data=None, 
-                       validation_split=None, verbose=1, embedding_path=None, 
-                       n_words=10000):
+    def __init__(self, train_data, validation_data, train_config):
         super().__init__()
-        self._output_dim = output_dim
-        self._input_length = input_length
-        self._run_time = run_time
-        self._X_train = X_train
-        self._y_train = y_train
-        self._save_path = save_path
-        self._epochs = epochs
-        self._batch_size = batch_size
-        self._validation_data = validation_data
-        self._validation_split = validation_split
-        self._verbose = verbose
-        self._embedding_path = embedding_path
-        self._n_words = n_words
-        self._input_dim = ''
-        self._weights = ''
-        self._tokenizer = ''
+        self._X_train = train_data.iloc[:, 0]
+        self._y_train = train_data.iloc[:, 1:7].to_numpy()
+        self._X_val = validation_data.iloc[:, 0]
+        self._y_val = validation_data.iloc[:, 1:7] .to_numpy()
+        self._train_config = train_config
+        self._input_dim = None
+        self._weights = None
+        self._tokenizer = None
         self._model = None
         self._history = None
+        self._extract_train_config()
+
+    def _extract_train_config(self):
+        self._output_dim = self._train_config['output_dim']
+        self._input_length = self._train_config['input_length']
+        self._run_time = self._train_config['run_time']
+        self._epochs = self._train_config['epochs']
+        self._batch_size = self._train_config['batch_size']
+        self._verbose = self._train_config['verbose']
+        self._embedding_path = self._train_config['embedding_path']
+        self._n_words = self._train_config['n_words']
+        self._model_save_path = os.path.join(
+            self._train_config['model_save_path'],
+            self._model_name,
+            self._run_time
+        )
 
     def _create_model(self):
         self._model = Sequential([
@@ -69,13 +74,18 @@ class BiLSTM(BaseModel):
             metrics=['accuracy']) # TODO: change to correct metrics once all ok
 
     def _preprocess_data(self):
+        # TODO: use tf dataloader
         self._tokenizer = Tokenizer(num_words=self._n_words, oov_token='<oov>')
         self._tokenizer.fit_on_texts(self._X_train)
         
         self._input_length = max([len(row) for row in self._X_train]) if self._input_length is None or self._input_length == 'None' else int(self._input_length)
-        self._X_train = self._tokenize_and_pad(self._X_train, self._tokenizer, self._input_length)
+        self._X_train_tok = self._tokenize_and_pad(self._X_train, self._tokenizer, self._input_length)
+        self._X_val_tok = self._tokenize_and_pad(self._X_val, self._tokenizer, self._input_length)
         self._input_dim = len(self._tokenizer.word_index) + 1
 
+        self._train = tf.data.Dataset.from_tensors((self._X_train_tok, self._y_train))
+        self._val = tf.data.Dataset.from_tensors((self._X_val_tok, self._y_val))
+              
     def _tokenize_and_pad(self, data, tokenizer, maxlen, padding='post', truncating='post'):
         print('tokenizing data')
         data = tokenizer.texts_to_sequences(data)
@@ -117,14 +127,11 @@ class BiLSTM(BaseModel):
 
         # create model architecture
         self._create_model()
-        summary = self.get_summary()
-        print('mode summary:', summary)
 
-        self._save_path = os.path.join(self._save_path, 'checkpoints', f'{self._model_name}_{self._run_time}')
-        create_folder(self._save_path)
+        create_folder(self._model_save_path)
 
         cp_callback = ModelCheckpoint(
-            filepath=self._save_path,
+            filepath=self._model_save_path,
             save_weights_only=False,
             # verbose=verbose,
             save_best_only=True,
@@ -132,27 +139,27 @@ class BiLSTM(BaseModel):
             mode='min')
 
         self._history = self._model.fit(
-                                    self._X_train,
-                                    self._y_train,
+                                    self._train,
                                     epochs=self._epochs,
-                                    validation_data=self._validation_data,
-                                    validation_split=self._validation_split,
+                                    validation_data=self._val,
                                     batch_size=self._batch_size,
                                     callbacks=[cp_callback])
-
+        
+        
     def predict(self, X, threshhold=0.5):
         pred = self._model.predict(X)
         return (pred > threshhold).astype(np.int)
 
-    def evaluate(self, X, y):
+    def evaluate(self, eval_data):
+        X, y = eval_data.iloc[:, 0], eval_data.iloc[:, 1:7].to_numpy()
         X = self._tokenize_and_pad(X, self._tokenizer, self._input_length)
         return self._model.evaluate(X, y)
 
     def load_model(self, path):
         self._model = load_model(path)
 
-    def save_model(self, mlflow, path):
-        path = os.path.join(path, 'saved_models', f'{self._model_name}_{self._run_time}')
+    def save_model(self, mlflow):
+        path = os.path.join(self.model_save_path, self._model_name, self._run_time)
         create_folder(path)
         self._save_tokenizer(path)
         self._save_model(mlflow, path)
@@ -172,5 +179,5 @@ class BiLSTM(BaseModel):
             f.write(json.dumps(tokenizer_json, ensure_ascii=False))
 
     def _save_model(self, mlflow, path):
-        mlflow.keras.save_model(self._model, os.path.join(path, f'model'))
+        mlflow.tensorflow.save_model(self._model, path)
         

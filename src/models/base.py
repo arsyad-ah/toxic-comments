@@ -19,4 +19,7 @@ class BaseModel(ABC):
     @abstractmethod
     def load_model(self):
         pass
-    
+
+    @abstractmethod
+    def predict(self):
+        pass

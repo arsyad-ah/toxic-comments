@@ -2,7 +2,7 @@ import os
 import pickle
 import json
 from src.datapipeline import DataPipeline
-from src.models.bi_lstm import BiLSTM
+from src.models import BiLSTMClf, BertSeqClf
 from keras_preprocessing.text import tokenizer_from_json
 
 MAXLEN=100

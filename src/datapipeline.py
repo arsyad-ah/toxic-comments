@@ -1,14 +1,14 @@
 import os
+import torch
+import nltk
 import pandas as pd
+from tqdm import tqdm
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, Dataset
 from src.utils import create_folder
-import nltk
-# nltk.download('punkt')
-# nltk.download('stopwords')
-# nltk.download('wordnet')
 
 
 class DataPipeline:
@@ -37,12 +37,12 @@ class DataPipeline:
             raise Exception('Unknown file format. Please check')
 
     def clean_data(self):
-        self._data.drop('id', axis=1, inplace=True)
+        if 'id' in self._data.columns:
+            self._data.drop('id', axis=1, inplace=True)
         self._data['toxic_cum_sum'] = self._data.iloc[:, 1:].sum(axis=1)
         self._data['is_negative'] = self._data['toxic_cum_sum']\
             .apply(lambda x: 1 if x >= 1 else 0)
 
-        # df['sentence_count'] = df["comment_text"].apply(lambda x: len(re.findall("\n",str(x)))+1)
         self._data['sentence_count'] = self._data["comment_text"]\
             .apply(self._get_sentence_count)
 
@@ -75,10 +75,10 @@ class DataPipeline:
             for i in add_stopwords:
                 stop_words.add(i)
         else:
-            raise Exception('Unknown input. Please check.')
+            raise ValueError('Unknown input. Please check.')
         lemmatizer = WordNetLemmatizer()
         print('lemmatizing tokens')
-        for i in range(self._data.shape[0]):
+        for i in tqdm(range(self._data.shape[0])):
             comments = word_tokenize(self._data.loc[i, 'comment_text_clean'])
             tok_clean_comments.append([lemmatizer.lemmatize(w.lower()) for w in comments \
                                     if w.isalpha() and w.lower() not in stop_words])
@@ -109,9 +109,14 @@ class DataPipeline:
             float(self._config.get('DEFAULT', 'train_size')), 
             int(self._config.get('DEFAULT', 'random_seed')))
         
+        # meta_data = {
+        #     f'train_{self._run_time}.csv': train, 
+        #     f'test_{self._run_time}.csv': test
+        # }
+
         meta_data = {
-            f'train_{self._run_time}.csv': train, 
-            f'test_{self._run_time}.csv': test
+            f'train.csv': train, 
+            f'test.csv': test
         }
 
         for k,v in meta_data.items():
@@ -119,7 +124,7 @@ class DataPipeline:
 
     def _save(self, data, path, file_name):
         create_folder(path)
-        print('saving interim dataset')
+        print(f'saving interim dataset: {file_name}')
         data.to_csv(os.path.join(path, file_name), index=False)
 
     def _split_data(self, X_col, y_col, train_size, random_seed, stratify=False):
@@ -145,4 +150,42 @@ class DataPipeline:
             stratify=stratify_by)
 
         return train, test
+
+
+class ToxicDataset(Dataset):
+    _x_col = 'comment_text_clean'
+    _y_col = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
     
+    def __init__(self, data, tokenizer, max_len):
+        self._data = data
+        self._tokenizer = tokenizer
+        self._max_len = max_len
+        self._texts = []
+        self._labels = []
+        
+        for idx in range(len(self._data)):
+            self._texts.append(self._data.loc[idx, self._x_col])
+            self._labels.append(self._data.loc[idx, self._y_col].tolist())
+        
+        
+    def __len__(self):
+        return len(self._data)
+    
+    def _prepare_data(self, i):
+        return self._tokenizer.encode_plus(self._texts[i],
+                                add_special_tokens=True,
+                              padding=True,
+                              truncation='longest_first',
+                              max_length=self._max_len,
+                               return_attention_mask=True,
+                               return_token_type_ids=True,
+                              return_tensors='pt')
+    
+    def __getitem__(self, item):
+        tok_text = self._prepare_data(item)
+        return {
+            'input_ids': tok_text['input_ids'].flatten(),
+            'token_type_ids': tok_text['token_type_ids'].flatten(),
+            'attention_mask': tok_text['attention_mask'].flatten(),
+            'label': torch.tensor(self._labels[item], dtype=torch.float32)
+        }

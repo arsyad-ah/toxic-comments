@@ -1,10 +1,10 @@
 import os
+import mlflow
 import pandas as pd
 import numpy as np
-from src.utils import cfg_to_dict
-from src.models.bi_lstm import BiLSTM
+from src.utils import cfg_to_dict, read_training_params, create_training_params
+from src.models import BiLSTMClf, BertSeqClf
 from src.datapipeline import DataPipeline
-import mlflow
     
 
 def train(config, run_time):
@@ -17,64 +17,60 @@ def train(config, run_time):
         dpl = DataPipeline(config, run_time)
         
         # TODO: convert to DB
-        dpl.read_data('interim_train_data')
+        dpl.read_data('train_data')
         train_data = dpl._data
-        print('train:', train_data.shape)
+        print('train shape: ', train_data.shape)
         
         # TODO: convert to DB
-        dpl.read_data('interim_test_data')
-        test_data = dpl._data
-        print(test_data.shape)
+        dpl.read_data('test_data')
+        val_data = dpl._data
+        print('test shape: ', val_data.shape)
 
         print('Getting model selection')
-        model_selection = int(config.get('DEFAULT', 'model_selection'))
+        model_selection = config.get('DEFAULT', 'model_selection')
 
-        # splitting data
-        print('splitting X, y data')
-        X_train = train_data['comment_text']
-        y_train = train_data.iloc[:, 1:7]
-        X_test = test_data['comment_text']
-        y_test = test_data.iloc[:, 1:7]
-
-        # get model params
         print('getting model params')
-        model_params = _get_model_params(config, model_selection, no_defaults=True)
-        model_params['run_time'] = run_time
-        print ('model_params', model_params)
+        train_config = read_training_params(
+            config.get(
+                'PATHS', 
+                'train_config_path'
+            )
+        )
 
         # init model
         print('model init')
-        model = BiLSTM(
-            X_train=X_train,
-            y_train=y_train,
-            validation_data=None,
-            **model_params)
+        train_params = create_training_params(
+            config,
+            train_config,
+            model_selection,
+            run_time
+        )
+
+        if model_selection == 'BiLSTMClf':
+            model = BiLSTMClf(train_data, val_data, train_params)
+
+        elif model_selection == 'BertSeqClf':
+            model = BertSeqClf('bert-base-uncased', train_data, val_data, train_params)
+
+        else:
+            raise NotImplementedError
         
         # train model
         print('training model')
         model.train()
         
-        # evaluate TODO: create another split from train
-        print('evaluating model')
-        evaluation = model.evaluate(X_test, y_test)
-        print('evaluation', evaluation)
-
-        # save
-        print('saving model')
-        model.save_model(mlflow, model_params['save_path'])
+        # # save
+        # print('saving model')
+        # model.save_model(mlflow)
 
                 
-        print('logging params')
-        mlflow.log_params(model_params)
-        print (model._history.history)
-        print('logging metrics')
-        mlflow.log_metrics({'loss': evaluation[0],
-                            'accuracy': evaluation[1]})
+        # print('logging params')
+        # mlflow.log_params(model_params)
+        # print (model._history.history)
+        # print('logging metrics')
+        # mlflow.log_metrics({'loss': evaluation[0],
+        #                     'accuracy': evaluation[1]})
 
         mlflow.end_run()
     return
 
-def _get_model_params(config, model_selection, no_defaults=False):
-    if model_selection == 1:
-        section = 'LSTM_MODEL'
-    return cfg_to_dict(config, section, no_defaults=no_defaults)
