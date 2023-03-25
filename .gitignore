@@ -1,5 +1,6 @@
 .DS_Store
 saved_models/
+.Trash*/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
