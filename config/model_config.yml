@@ -6,10 +6,10 @@ TRAIN:
     validation_split: 0.2
     batch_size: 4
     verbose: 1
-    n_words: 100000
+    n_words: 10000
   BertSeqClf:
     overwrite_output_dir: True
-    num_train_epochs: 3
+    num_train_epochs: 5
     gradient_accumulation_steps: 16
     per_device_train_batch_size: 8
     per_device_eval_batch_size: 8
@@ -21,5 +21,5 @@ TRAIN:
     save_strategy: epoch
     fp16: False
     fp16_opt_level: O1
-    report_to: null
+    report_to: mlflow
     run_name: 1234

@@ -10,7 +10,7 @@ def create_folder(path):
 
 def read_training_params(config_path):
     try: 
-        with open (config_path, 'r') as file:
+        with open(config_path, 'r') as file:
             config = yaml.safe_load(file)
             file.close()
             return config

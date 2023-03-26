@@ -6,6 +6,7 @@ from src.datapipeline import ToxicDataset
 from src.models.base import BaseModel
 from transformers import BertTokenizerFast, BertForSequenceClassification, \
     Trainer, TrainingArguments
+import importlib.util as iu
 
 
 class BertSeqClf(BaseModel):
@@ -14,6 +15,7 @@ class BertSeqClf(BaseModel):
     os.environ['DISABLE_MLFLOW_INTEGRATION'] = 'true'
     _max_length = 512
     _device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(f'device: {_device}')
     _backend = ["bert-base-uncased"]
 
     def __init__(self, backend, train_data, validation_data, train_config):
@@ -30,6 +32,7 @@ class BertSeqClf(BaseModel):
             self._model_name,
             self._train_config['run_time']
         )
+        self._trainer = None
 
     def _prepare_data(self, train_data, validation_data):
         print('preparing data')
@@ -55,9 +58,10 @@ class BertSeqClf(BaseModel):
             logging_strategy=self._train_config['logging_strategy'],
             fp16=self._train_config['fp16'],
             fp16_opt_level=self._train_config['fp16_opt_level'],
-            report_to=self._train_config['report_to'],
+            # report_to=self._train_config['report_to'],
             run_name=self._train_config['run_name']
         )
+
         print('training model')
         self._trainer = Trainer(
             model=self._model,
@@ -65,13 +69,26 @@ class BertSeqClf(BaseModel):
             args=self._training_args,
             train_dataset=self._train_data,
             eval_dataset=self._validation_data)
-
+        
         self._trainer.train()
+        return self._extract_train_history()
+    
+    def _extract_train_history(self):
+        res = {}
+        metrics_to_extract = ['loss', 'eval_loss', 'learning_rate', 'eval_runtime', ]
+        for train_iter in self._trainer.state.log_history:
+            for k,v in train_iter.items():
+                if k in metrics_to_extract:
+                    if k in res:
+                        res[k].append(v)
+                    else:
+                        res[k] = [v]
+        return res
 
     def evaluate(self, eval_data):
         return self._trainer.evaluate(eval_data)
 
-    def save_model(self, mlflow):
+    def save_model(self):
         self._trainer.save_model(output_dir=self._train_config['output_dir'])
 
     def load_model(self, path):

@@ -1,6 +1,7 @@
 import os
 import io
 import json 
+import mlflow
 import pickle
 import numpy as np
 import tensorflow as tf
@@ -14,6 +15,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 from src.utils import create_folder
 from src.models.base import BaseModel
 
+# mlflow.tensorflow.autolog()
 
 class BiLSTMClf(BaseModel):
     _model_name = 'BiLSTMClf'
@@ -83,7 +85,7 @@ class BiLSTMClf(BaseModel):
         self._X_val_tok = self._tokenize_and_pad(self._X_val, self._tokenizer, self._input_length)
         self._input_dim = len(self._tokenizer.word_index) + 1
 
-        self._train = tf.data.Dataset.from_tensors((self._X_train_tok, self._y_train))
+        self._train = tf.data.Dataset.from_tensors((self._X_train_tok, self._y_train))#.batch(4)
         self._val = tf.data.Dataset.from_tensors((self._X_val_tok, self._y_val))
               
     def _tokenize_and_pad(self, data, tokenizer, maxlen, padding='post', truncating='post'):
@@ -131,7 +133,7 @@ class BiLSTMClf(BaseModel):
         create_folder(self._model_save_path)
 
         cp_callback = ModelCheckpoint(
-            filepath=self._model_save_path,
+            filepath=os.path.join(self._model_save_path, 'checkpoint'),
             save_weights_only=False,
             # verbose=verbose,
             save_best_only=True,
@@ -144,6 +146,7 @@ class BiLSTMClf(BaseModel):
                                     validation_data=self._val,
                                     batch_size=self._batch_size,
                                     callbacks=[cp_callback])
+        return self._history.history
         
         
     def predict(self, X, threshhold=0.5):
@@ -158,11 +161,14 @@ class BiLSTMClf(BaseModel):
     def load_model(self, path):
         self._model = load_model(path)
 
-    def save_model(self, mlflow):
-        path = os.path.join(self.model_save_path, self._model_name, self._run_time)
+    def save_model(self):
+        path = os.path.join(self._model_save_path, 'model')
         create_folder(path)
+        print('saving tokenizer')
+        self._save_model(path)
+        print('saving embeddings')
         self._save_tokenizer(path)
-        self._save_model(mlflow, path)
+        print('saving model')
         self._save_embeddings(path)
 
     def _save_embeddings(self, path):
@@ -178,6 +184,6 @@ class BiLSTMClf(BaseModel):
         with io.open(os.path.join(path, f'tokenizer.json'), 'w', encoding='utf-8') as f:
             f.write(json.dumps(tokenizer_json, ensure_ascii=False))
 
-    def _save_model(self, mlflow, path):
+    def _save_model(self, path):
         mlflow.tensorflow.save_model(self._model, path)
         
