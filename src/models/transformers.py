@@ -9,7 +9,7 @@ from transformers import BertTokenizerFast, BertForSequenceClassification, \
 import importlib.util as iu
 
 
-class BertSeqClf(BaseModel):
+class BertSeqClf(BaseModel, mlflow.pyfunc.PythonModel):
     _model_name = 'BertSeqClf'
     os.environ['TOKENIZERS_PARALLELISM'] = 'false'
     os.environ['DISABLE_MLFLOW_INTEGRATION'] = 'true'
@@ -90,6 +90,11 @@ class BertSeqClf(BaseModel):
 
     def save_model(self):
         self._trainer.save_model(output_dir=self._train_config['output_dir'])
+        # mlflow.pyfunc.log_model(
+        #     artifact_path=self._train_config['output_dir'],
+        #     python_model=self._trainer.model,
+        #     registered_model_name=self._model_name
+        # )
 
     def load_model(self, path):
         print('loading model')
