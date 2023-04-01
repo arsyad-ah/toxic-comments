@@ -9,8 +9,6 @@ ARG UID
 ARG ML_USER
 ARG WORK_DIR="/home/$ML_USER"
 ARG CONDA_PATH="$WORK_DIR/miniconda3/bin"
-# ARG MINI_CONDA_SH="Miniconda3-py38_4.8.2-Linux-x86_64.sh"
-# ARG MINI_CONDA_SH="Miniconda3-4.5.4-Linux-x86_64.sh"
 ARG MINI_CONDA_SH="Miniconda3-py39_4.12.0-Linux-x86_64.sh"
 
 RUN groupadd -g $GID $ML_USER && useradd -u $UID -g $GID -m $ML_USER && \
@@ -27,6 +25,8 @@ RUN curl -O https://repo.anaconda.com/miniconda/$MINI_CONDA_SH \
 ENV PATH $CONDA_PATH:$PATH
 
 COPY conda.yml jupyter-config.sh ./
+
+RUN mkdir -p $WORKSPACE_FOLDER/$SAVED_MODELS_FOLDER
 
 RUN conda env update -f conda.yml -n base \
     && rm conda.yml
