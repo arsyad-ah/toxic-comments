@@ -5,10 +5,11 @@ source: https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/o
 
 # TODO List
 
-1. Complete docstrings and documentation
-2. Add 1-2 more models
-3. Change print statements to loggers
-4. Change / Upload data to read/write from/to DB (using DB image)
-5. Dockerize into images
-6. Create a simple frontend for easy use to train / inference
-7. Create prerequisite files to create folders and download necessary files (e.g. glove embeddings, data)
+- Change print statements to loggers
+- Change / Upload data to read/write from/to DB (using DB image)
+- Create a simple frontend for easy use to train / inference
+- Create prerequisite files to create folders and download necessary files (e.g. glove embeddings, data)
+- Pending mlflow integration with transformer flavour to load, save and log models - [link](https://github.com/mlflow/mlflow/pull/8086)
+
+# Bugs
+- BiLSTM model will break training pipeline if using the whole dataset. Need to relook into dataloader implementation
