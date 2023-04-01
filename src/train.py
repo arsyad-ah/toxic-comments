@@ -9,17 +9,17 @@ from src.datapipeline import DataPipeline
 
 MLFLOW_TRACKING_URI = f'http://{os.environ["MLFLOW_NAME"]}:{os.environ["MLFLOW_PORT"]}'
 EXPERIMENT_NAME = 'toxic-comments-exp'
-
+print('MLFLOW_TRACKING_URI', MLFLOW_TRACKING_URI)
 
 def train(config, run_time):
-
+    # return
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
     try:
         experiment = mlflow.get_experiment_by_name(EXPERIMENT_NAME)
         experiment_id = experiment.experiment_id
         print('Existing experiment')
-    except mlflow.exceptions.RestException as err:
+    except (mlflow.exceptions.RestException, AttributeError) as err:
         print(err)
         print('Creating experiment')
         experiment_id = mlflow.create_experiment(EXPERIMENT_NAME)
