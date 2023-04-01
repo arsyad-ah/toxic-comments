@@ -19,7 +19,6 @@ from src.models.base import BaseModel
 
 class BiLSTMClf(BaseModel):
     _model_name = 'BiLSTMClf'
-    # TODO: refactor
 
     def __init__(self, train_data, validation_data, train_config):
         super().__init__()
