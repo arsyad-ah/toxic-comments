@@ -120,7 +120,7 @@ class DataPipeline:
         }
 
         for k,v in meta_data.items():
-            self._save(v, self._config.get('PATHS', 'interim_data_path'), k)
+            self._save(v, self._config.get('PATHS', 'train_data_path'), k)
 
     def _save(self, data, path, file_name):
         create_folder(path)
