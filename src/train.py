@@ -33,14 +33,14 @@ def train(config, run_time):
             # TODO: convert to DB or fix method
             dpl.read_data('train_data')
             train_data = dpl._data
-            train_data = train_data.sample(100)
+            train_data = train_data#.sample(100)
             train_data.reset_index(inplace=True, drop=True)
             print('train shape: ', train_data.shape)
 
             # TODO: convert to DB
             dpl.read_data('test_data')
             val_data = dpl._data
-            val_data = val_data.sample(5)
+            val_data = val_data#.sample(5)
             val_data.reset_index(inplace=True, drop=True)
             print('test shape: ', val_data.shape)
 
