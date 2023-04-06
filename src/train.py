@@ -3,7 +3,7 @@ import mlflow
 import pandas as pd
 import numpy as np
 from src.utils import cfg_to_dict, read_training_params, create_training_params
-from src.models import BiLSTMClf, BertSeqClf
+from src.models import BiLSTMClfTF, BertSeqClf
 from src.datapipeline import DataPipeline
     
 
@@ -30,7 +30,7 @@ def train(config, run_time):
             print('Starting model training')
             dpl = DataPipeline(config, run_time)
 
-            # TODO: convert to DB
+            # TODO: convert to DB or fix method
             dpl.read_data('train_data')
             train_data = dpl._data
             train_data = train_data.sample(100)
@@ -55,16 +55,17 @@ def train(config, run_time):
                 )
             )
 
-            # init model
-            print('model init')
+            print('getting training params')
             train_params = create_training_params(
                 config,
                 train_config,
                 model_selection,
                 run_time
             )
-            if model_selection == 'BiLSTMClf':
-                model = BiLSTMClf(train_data, val_data, train_params)
+            # init model
+            print('model init')
+            if model_selection == 'BiLSTMClfTF':
+                model = BiLSTMClfTF(train_data, val_data, train_params)
             elif model_selection == 'BertSeqClf':
                 model = BertSeqClf('bert-base-uncased', train_data, val_data, train_params)
             else:
@@ -87,6 +88,6 @@ def train(config, run_time):
                     mlflow.log_metric(key=metric, value=train_history[metric][ep], step=ep)
 
         except Exception as err:
-            print(f'Error: {err}')
+            print(f'Training error: {err}. Please check')
         finally:
             mlflow.end_run()
