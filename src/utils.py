@@ -24,7 +24,7 @@ def create_training_params(config, model_params, model_name, run_time):
         'run_time': run_time, 
         **model_params['TRAIN'][model_name]
         }
-    if model_name == 'BiLSTMClf':
+    if model_name == 'BiLSTMClfTF':
         train_params.update({'embedding_path': config.get('PATHS', 'embedding_path')})
     return train_params
 

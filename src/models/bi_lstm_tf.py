@@ -17,8 +17,8 @@ from src.models.base import BaseModel
 
 # mlflow.tensorflow.autolog()
 
-class BiLSTMClf(BaseModel):
-    _model_name = 'BiLSTMClf'
+class BiLSTMClfTF(BaseModel):
+    _model_name = 'BiLSTMClfTF'
 
     def __init__(self, train_data, validation_data, train_config):
         super().__init__()

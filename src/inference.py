@@ -2,7 +2,7 @@ import os
 import pickle
 import json
 from src.datapipeline import DataPipeline
-from src.models import BiLSTMClf, BertSeqClf
+from src.models import BiLSTMClfTF, BertSeqClf
 from keras_preprocessing.text import tokenizer_from_json
 
 MAXLEN=100
@@ -20,7 +20,7 @@ def make_inference(config, run_time):
 
 
     # load model
-    model = BiLSTM()
+    model = BiLSTMClfTF()
 
     encoded_inference_data = model._tokenize_and_pad(inference_data.comment_text, tokenizer, maxlen=MAXLEN)
     print('data preprocessed for inference')
