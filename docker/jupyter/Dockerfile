@@ -7,6 +7,7 @@ RUN apt-get update \
 ARG GID
 ARG UID
 ARG ML_USER
+# ARG WORKSPACE_FOLDER
 ARG WORK_DIR="/home/$ML_USER"
 ARG CONDA_PATH="$WORK_DIR/miniconda3/bin"
 ARG MINI_CONDA_SH="Miniconda3-py39_4.12.0-Linux-x86_64.sh"
@@ -28,7 +29,7 @@ RUN mkdir -p $WORKSPACE_FOLDER/$SAVED_MODELS_FOLDER
 
 COPY conda.yml jupyter-config.sh ./
 
-COPY scripts $WORKSPACE_FOLDER/scripts
+COPY ../../scripts $WORKSPACE_FOLDER/scripts
 
 RUN conda env update -f conda.yml -n base \
     && rm conda.yml
