@@ -184,10 +184,10 @@ class BiLSTMClfTF(BaseModel):
             f.write(json.dumps(tokenizer_json, ensure_ascii=False))
 
     def _save_model(self, path):
-        mlflow.tensorflow.save_model(self._model, path)
+        # mlflow.tensorflow.save_model(self._model, path)
         mlflow.tensorflow.log_model(
             sk_model=self._model,
-            artifact_path=path,
+            artifact_path='model',
             registered_model_name=self._model_name,
     )
         

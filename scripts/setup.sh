@@ -1,7 +1,8 @@
 #!/bin/bash
 
-filename=glove.6B.zip
-embeddings_dir=../embeddings
+FILENAME=glove.6B.zip
+EMBEDDINGS_DIR=../embeddings
 
-curl https://nlp.stanford.edu/data/${filename} -O $embeddings_dir/$filename
-unzip $embeddings_dir/$filename -d .
+mkdir -p $EMBEDDINGS_DIR
+curl https://downloads.cs.stanford.edu/nlp/data/${FILENAME} -O ${EMBEDDINGS_DIR}/${FILENAME}
+unzip ${EMBEDDINGS_DIR}/${FILENAME} -d .

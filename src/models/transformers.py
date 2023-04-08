@@ -89,7 +89,15 @@ class BertSeqClf(BaseModel, mlflow.pyfunc.PythonModel):
         return self._trainer.evaluate(eval_data)
 
     def save_model(self):
-        self._trainer.save_model(output_dir=self._train_config['output_dir'])
+        # self._trainer.save_model(output_dir=self._train_config['output_dir'])
+        components = {
+            "model": self._trainer.model,
+            "tokenizer": self._trainer.tokenizer,
+                    }
+        mlflow.transformers.log_model(components,
+                                      artifact_path='model',
+                                      registered_model_name=self._model_name,
+                                      )
         # mlflow.pyfunc.log_model(
         #     artifact_path=self._train_config['output_dir'],
         #     python_model=self._trainer.model,

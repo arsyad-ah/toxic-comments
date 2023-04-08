@@ -24,11 +24,10 @@ RUN curl -O https://repo.anaconda.com/miniconda/$MINI_CONDA_SH \
 
 ENV PATH $CONDA_PATH:$PATH
 
-RUN mkdir -p $WORKSPACE_FOLDER/$SAVED_MODELS_FOLDER
+RUN mkdir -p $WORKSPACE_FOLDER/$SAVED_MODELS_FOLDER \
+    && chown -R $UID:$GID $WORK_DIR/$WORKSPACE_FOLDER/
 
 COPY conda.yml jupyter-config.sh ./
-
-COPY scripts $WORKSPACE_FOLDER/scripts
 
 RUN conda env update -f conda.yml -n base \
     && rm conda.yml
