@@ -7,12 +7,15 @@ RUN apt-get update \
 ARG GID
 ARG UID
 ARG ML_USER
+ARG MLRUNS_PATH
 ARG WORK_DIR="/home/$ML_USER"
 ARG CONDA_PATH="$WORK_DIR/miniconda3/bin"
 ARG MINI_CONDA_SH="Miniconda3-py39_4.12.0-Linux-x86_64.sh"
 
+RUN mkdir $MLRUNS_PATH
+
 RUN groupadd -g $GID $ML_USER && useradd -u $UID -g $GID -m $ML_USER && \
-    chown -R $UID:$GID $WORK_DIR
+    chown -R $UID:$GID $WORK_DIR $MLRUNS_PATH
 
 USER $ML_USER
 WORKDIR $WORK_DIR
