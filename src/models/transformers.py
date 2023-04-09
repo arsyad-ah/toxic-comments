@@ -1,6 +1,6 @@
 import os
 import torch
-import mlflow
+# import mlflow
 from src.utils import create_folder
 from src.datapipeline import ToxicDataset
 from src.models.base import BaseModel
@@ -9,7 +9,7 @@ from transformers import BertTokenizerFast, BertForSequenceClassification, \
 import importlib.util as iu
 
 
-class BertSeqClf(BaseModel, mlflow.pyfunc.PythonModel):
+class BertSeqClf(BaseModel):
     _model_name = 'BertSeqClf'
     os.environ['TOKENIZERS_PARALLELISM'] = 'false'
     os.environ['DISABLE_MLFLOW_INTEGRATION'] = 'true'
@@ -18,7 +18,7 @@ class BertSeqClf(BaseModel, mlflow.pyfunc.PythonModel):
     print(f'device: {_device}')
     _backend = ["bert-base-uncased"]
 
-    def __init__(self, backend, train_data, validation_data, train_config):
+    def __init__(self, backend, train_data, validation_data, train_config, mlflow):
         if backend not in self._backend:
             raise ValueError(f'Unknown model selected. Please check value: {backend}')
         self._tokenizer, self._model = self.load_model(backend)
@@ -33,6 +33,7 @@ class BertSeqClf(BaseModel, mlflow.pyfunc.PythonModel):
             self._train_config['run_time']
         )
         self._trainer = None
+        self._mlflow = mlflow
 
     def _prepare_data(self, train_data, validation_data):
         print('preparing data')
@@ -94,7 +95,7 @@ class BertSeqClf(BaseModel, mlflow.pyfunc.PythonModel):
             "model": self._trainer.model,
             "tokenizer": self._trainer.tokenizer,
                     }
-        mlflow.transformers.log_model(components,
+        self._mlflow.transformers.log_model(components,
                                       artifact_path='model',
                                       registered_model_name=self._model_name,
                                       )

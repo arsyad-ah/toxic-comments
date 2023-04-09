@@ -65,9 +65,9 @@ def train(config, run_time):
             # init model
             print('model init')
             if model_selection == 'BiLSTMClfTF':
-                model = BiLSTMClfTF(train_data, val_data, train_params)
+                model = BiLSTMClfTF(train_data, val_data, train_params, mlflow)
             elif model_selection == 'BertSeqClf':
-                model = BertSeqClf('bert-base-uncased', train_data, val_data, train_params)
+                model = BertSeqClf('bert-base-uncased', train_data, val_data, train_params, mlflow)
             else:
                 raise NotImplementedError
 

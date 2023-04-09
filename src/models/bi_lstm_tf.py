@@ -1,7 +1,7 @@
 import os
 import io
 import json 
-import mlflow
+# import mlflow
 import pickle
 import numpy as np
 import tensorflow as tf
@@ -19,8 +19,9 @@ from src.models.base import BaseModel
 
 class BiLSTMClfTF(BaseModel):
     _model_name = 'BiLSTMClfTF'
+    _asset_path = 'assets'
 
-    def __init__(self, train_data, validation_data, train_config):
+    def __init__(self, train_data, validation_data, train_config, mlflow):
         super().__init__()
         self._X_train = train_data.iloc[:, 0]
         self._y_train = train_data.iloc[:, 1:7].to_numpy()
@@ -32,6 +33,7 @@ class BiLSTMClfTF(BaseModel):
         self._tokenizer = None
         self._model = None
         self._history = None
+        self._mlflow = mlflow
         self._extract_train_config()
 
     def _extract_train_config(self):
@@ -163,31 +165,36 @@ class BiLSTMClfTF(BaseModel):
     def save_model(self):
         path = os.path.join(self._model_save_path, 'model')
         create_folder(path)
-        print('saving tokenizer')
-        self._save_model(path)
-        print('saving embeddings')
-        self._save_tokenizer(path)
         print('saving model')
+        self._save_model('model')
+        print('saving tokenizer')
+        self._save_tokenizer(path)
+        print('saving embeddings')
         self._save_embeddings(path)
 
     def _save_embeddings(self, path):
         embeddings = {}
+        fname = 'embeddings.pkl'
         model_embeddings = self._model.get_layer('embeddings').get_weights()[0]
         for word, index in self._tokenizer.word_index.items():
             embeddings[word] = model_embeddings[index]
-        with open(os.path.join(path, f'embeddings.pkl'), 'wb') as handle:
+        with open(os.path.join(path, fname), 'wb') as handle:
             pickle.dump(embeddings, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        handle.close()
+        self._mlflow.log_artifact(path, self._asset_path)
 
     def _save_tokenizer(self, path):
+        fname = 'tokenizer.json'
         tokenizer_json = self._tokenizer.to_json()
-        with io.open(os.path.join(path, f'tokenizer.json'), 'w', encoding='utf-8') as f:
+        with io.open(os.path.join(path, fname), 'w', encoding='utf-8') as f:
             f.write(json.dumps(tokenizer_json, ensure_ascii=False))
+        f.close()
+        self._mlflow.log_artifact(path, self._asset_path)
 
-    def _save_model(self, path):
-        # mlflow.tensorflow.save_model(self._model, path)
-        mlflow.tensorflow.log_model(
-            sk_model=self._model,
-            artifact_path='model',
+    def _save_model(self, artifact_path):
+        self._mlflow.tensorflow.log_model(
+            model=self._model,
+            artifact_path=artifact_path,
             registered_model_name=self._model_name,
     )
         
