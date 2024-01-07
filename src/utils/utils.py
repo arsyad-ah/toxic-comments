@@ -2,6 +2,7 @@ import os
 import yaml
 import configparser
 from ast import literal_eval
+from configparser import NoSectionError
 
 def create_folder(path):
     if not os.path.exists(path):
@@ -9,13 +10,13 @@ def create_folder(path):
     return True
 
 def read_training_params(config_path):
-    try: 
+    try:
         with open(config_path, 'r') as file:
             config = yaml.safe_load(file)
             file.close()
             return config
-    except Exception as e:
-        raise ValueError(f'Error reading the config file: {e}')
+    except Exception as exc:
+        raise ValueError(f'Error reading the config file: {exc}') from exc
 
 
 def create_training_params(config, model_params, model_name, run_time):
@@ -45,7 +46,7 @@ class ConfigParser(configparser.ConfigParser):
         if no_defaults:
             try:
                 return list(self._sections[section].keys())
-            except KeyError:
-                raise configparser.NoSectionError(section)
+            except KeyError as exc:
+                raise NoSectionError(section) from exc
         else:
             return super().options(section, **kwargs)

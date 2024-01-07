@@ -12,8 +12,8 @@ from src.models.base import BaseModel
 
 # TODO: implement pytorch version of model
 class BiLSTMClfPT(nn.ModuleList, BaseModel):
-    _model_name = 'BiLSTMClfPT'
-    _device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    _MODEL_NAME = 'BiLSTMClfPT'
+    _DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     def __init__(self, train_data, validation_data, train_config):
         super().__init__()
@@ -45,7 +45,7 @@ class BiLSTMClfPT(nn.ModuleList, BaseModel):
 
         self._model_save_path = os.path.join(
             self._train_config['model_save_path'],
-            self._model_name,
+            self._MODEL_NAME,
             self._run_time
         )
 
@@ -188,6 +188,6 @@ class BiLSTMClfPT(nn.ModuleList, BaseModel):
         mlflow.tensorflow.log_model(
             sk_model=self._model,
             artifact_path=path,
-            registered_model_name=self._model_name,
+            registered_model_name=self._MODEL_NAME,
     )
         
