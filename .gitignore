@@ -110,8 +110,8 @@ venv.bak/
 
 # Other likely dirs that should not be committed
 data/
-embeddings/*.txt
-embeddings/*.zip
+**/embeddings/*.txt
+**/embeddings/*.zip
 mlruns/
 
 */__pycache__/*
