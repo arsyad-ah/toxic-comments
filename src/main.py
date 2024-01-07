@@ -1,7 +1,5 @@
 import logging
-from src.datapipeline import DataPipeline
-from src.train import train
-from src.inference import make_inference
+from src.pipelines import DataPipeline, train, make_inference
 from datetime import datetime
 from src.utils import ConfigParser
 

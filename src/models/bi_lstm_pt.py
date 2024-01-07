@@ -7,14 +7,14 @@ import torch
 import numpy as np
 from torch import nn
 from tqdm import tqdm
-from torch.utils.data import Dataset, DataLoader
 from src.utils import create_folder
 from src.models.base import BaseModel
 
 
+# TODO: implement pytorch version of model
 class BiLSTMClfPT(nn.ModuleList, BaseModel):
-    _model_name = 'BiLSTMClfPT'
-    _device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    _MODEL_NAME = 'BiLSTMClfPT'
+    _DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     def __init__(self, train_data, validation_data, train_config):
         super().__init__()
@@ -46,7 +46,7 @@ class BiLSTMClfPT(nn.ModuleList, BaseModel):
 
         self._model_save_path = os.path.join(
             self._train_config['model_save_path'],
-            self._model_name,
+            self._MODEL_NAME,
             self._run_time
         )
 
@@ -75,9 +75,8 @@ class BiLSTMClfPT(nn.ModuleList, BaseModel):
         #packed sequence
         packed_embedded = nn.utils.rnn.pack_padded_sequence(embedded, text_lengths, batch_first=True)
         
-        packed_output, (hidden, cell) = self.lstm(packed_embedded)
+        _, (hidden, _) = self.lstm(packed_embedded)
 
-        
         #concat the final forward and backward hidden state
         hidden = torch.cat((hidden[-2,:,:], hidden[-1,:,:]), dim = 1)
                 
@@ -91,7 +90,7 @@ class BiLSTMClfPT(nn.ModuleList, BaseModel):
 
     def _preprocess_data(self):
         pass
-              
+
     def _tokenize_and_pad(self, data, tokenizer, maxlen, padding='post', truncating='post'):
         pass
 
@@ -177,12 +176,12 @@ class BiLSTMClfPT(nn.ModuleList, BaseModel):
         model_embeddings = self._model.get_layer('embeddings').get_weights()[0]
         for word, index in self._tokenizer.word_index.items():
             embeddings[word] = model_embeddings[index]
-        with open(os.path.join(path, f'embeddings.pkl'), 'wb') as handle:
+        with open(os.path.join(path, 'embeddings.pkl'), 'wb') as handle:
             pickle.dump(embeddings, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     def _save_tokenizer(self, path):
         tokenizer_json = self._tokenizer.to_json()
-        with io.open(os.path.join(path, f'tokenizer.json'), 'w', encoding='utf-8') as f:
+        with io.open(os.path.join(path, 'tokenizer.json'), 'w', encoding='utf-8') as f:
             f.write(json.dumps(tokenizer_json, ensure_ascii=False))
 
     def _save_model(self, path):
@@ -190,6 +189,6 @@ class BiLSTMClfPT(nn.ModuleList, BaseModel):
         mlflow.tensorflow.log_model(
             sk_model=self._model,
             artifact_path=path,
-            registered_model_name=self._model_name,
+            registered_model_name=self._MODEL_NAME,
     )
         
