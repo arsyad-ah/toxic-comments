@@ -33,13 +33,13 @@ def train(config, run_time):
 
             # TODO: convert to DB or fix method
             train_dpl.read_data('train_data')
-            train_data = train_dpl.data
+            train_data = train_dpl.data.head(100)
             train_data.reset_index(inplace=True, drop=True)
             print('train shape: ', train_data.shape)
 
             # TODO: convert to DB
             val_dpl.read_data('test_data')
-            val_data = val_dpl.data
+            val_data = val_dpl.data.head(10)
             val_data.reset_index(inplace=True, drop=True)
             print('test shape: ', val_data.shape)
 
@@ -87,6 +87,6 @@ def train(config, run_time):
                     mlflow.log_metric(key=metric, value=train_history[metric][ep], step=ep)
 
         except Exception as err:
-            print(f'Training error: {err}. Please check')
+            print(f'Training error:\n{err}. Please check')
         finally:
             mlflow.end_run()

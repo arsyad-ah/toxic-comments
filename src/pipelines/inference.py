@@ -17,6 +17,7 @@ def make_inference(config, run_time):
     print('inference_data shape: ', inference_dpl.data.shape)
 
     model_selection = config.get('INFERENCE', 'inference_model')
+    run_id = config.get('INFERENCE', 'run_id')
     model_name = model_selection.split('_')[0]
 
     if model_name == 'BiLSTMClfTF':
